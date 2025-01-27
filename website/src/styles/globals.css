@@ -228,13 +228,6 @@ table {
   background-repeat: no-repeat;
 }
 
-.bg-globe {
-  background-image: var(--globe-bg-url);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
 /* Logo 样式 */
 .logo-beauty {
   width: 200px;
