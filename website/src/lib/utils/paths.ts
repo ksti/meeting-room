@@ -31,7 +31,7 @@ export const getCssVariables = () => {
   return `
     :root {
       --base-path: '${basePath}';
-      --globe-bg-url: url('${basePath}/globe.svg');
+      --bg-url-prism: url('${basePath}/subtle-prism.svg');
     }
   `;
 };
