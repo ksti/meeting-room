@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using MeetingRoom.Api.Models;
+using MeetingRoom.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -12,22 +13,18 @@ namespace MeetingRoom.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(ILogger<AuthController> logger) : ControllerBase
+    public class AuthController(ILogger<AuthController> logger, IAuthService authService) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserModel userModel)
         {
             // create user
             var user = new IdentityUser { UserName = userModel.Email, Email = userModel.Email };
-            var result = await _userManager.CreateAsync(user, "P@ssw0rd");
-            if (!result.Succeeded)
+            var result = await authService.CreateAsync(user, "P@ssw0rd");
+            if (string.IsNullOrEmpty(result.AccessToken))
             {
                 return BadRequest();
             }
-
-            // add student to db
-            _dbContext.Students.Add(student);
-            await _dbContext.SaveChangesAsync();
 
             // generate jwt token
             var claims = new[]

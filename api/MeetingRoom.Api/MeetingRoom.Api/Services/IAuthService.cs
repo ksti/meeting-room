@@ -1,4 +1,5 @@
 ﻿using MeetingRoom.Api.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace MeetingRoom.Api.Services
 {
@@ -9,9 +10,11 @@ namespace MeetingRoom.Api.Services
         Task<bool> ResetPasswordAsync(string email, string newPassword);
         Task<bool> LogoutAsync(string email);
 
-        Task<AuthResult> LoginAsync(string email, string requestPassword);
-        Task<AuthResult> LoginByUsernameAsync(string username, string requestPassword);
+        Task<AuthResult> LoginAsync(string email, string password);
+        Task<AuthResult> LoginByUsernameAsync(string username, string password);
         Task<AuthResult> RefreshTokenAsync(string requestRefreshToken);
         Task<bool> CheckAuthStatusAsync(string token);
+
+        Task<AuthResult> CreateAsync(IdentityUser user, string password);
     }
 }

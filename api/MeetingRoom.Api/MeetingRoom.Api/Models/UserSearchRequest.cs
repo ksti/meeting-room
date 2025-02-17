@@ -11,7 +11,7 @@ namespace MeetingRoom.Api.Models
 
         public string? Search { get; set; }
 
-        public string? SortBy { get; set; } = "LastModifiedAt";
+        public string? SortBy { get; set; } = "UpdatedAt";
 
         public bool SortDesc { get; set; } = true;
 

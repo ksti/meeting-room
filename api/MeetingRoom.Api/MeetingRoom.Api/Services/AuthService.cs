@@ -5,7 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MeetingRoom.Api.Exceptions;
 using MeetingRoom.Api.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace MeetingRoom.Api.Services
 {
@@ -43,7 +45,7 @@ namespace MeetingRoom.Api.Services
 
             return new AuthResult
             {
-                Token = token,
+                AccessToken = token,
                 RefreshToken = refreshToken,
                 ExpiresIn = refreshTokenExpiryTime,
                 User = UserService.MapToDto(user)
@@ -58,22 +60,66 @@ namespace MeetingRoom.Api.Services
                 throw new BusinessException("Invalid username or password");
             }
 
-            if (user.Status == UserStatus.Disabled)
+            if (user.Status == "disabled")
             {
                 throw new BusinessException("User account is disabled");
             }
 
             var token = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
+            var accessTokenExpiryTime = DateTime.UtcNow.AddMinutes(30);
             var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = refreshTokenExpiryTime;
+            user.Tokens.Add(new TokenEntity
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                AccessTokenExpiresAt = accessTokenExpiryTime,
+                RefreshTokenExpiresAt = refreshTokenExpiryTime,
+            });
             await _userRepository.UpdateAsync(user);
 
             return new AuthResult
             {
-                Token = token,
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                ExpiresIn = refreshTokenExpiryTime,
+                User = UserService.MapToDto(user)
+            };
+        }
+
+        public async Task<AuthResult> CreateAsync(IdentityUser user, string password)
+        {
+            var existedUser = await _userRepository.GetByEmailAsync(user.Email);
+            if (existedUser != null)
+            {
+                throw new BusinessException("User already existed");
+            }
+
+            var userEntity = new UserEntity
+            {
+                Username = user.UserName,
+                Email = user.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            };
+
+            var token = GenerateJwtToken(userEntity);
+            var refreshToken = GenerateRefreshToken();
+            var accessTokenExpiryTime = DateTime.UtcNow.AddMinutes(30);
+            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+            userEntity.Tokens.Add(new TokenEntity
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                AccessTokenExpiresAt = accessTokenExpiryTime,
+                RefreshTokenExpiresAt = refreshTokenExpiryTime,
+            });
+            await _userRepository.UpdateAsync(userEntity);
+
+            return new AuthResult
+            {
+                AccessToken = token,
                 RefreshToken = refreshToken,
                 ExpiresIn = refreshTokenExpiryTime,
                 User = UserService.MapToDto(user)
@@ -135,7 +181,7 @@ namespace MeetingRoom.Api.Services
 
             return new AuthResult
             {
-                Token = token,
+                AccessToken = token,
                 RefreshToken = newRefreshToken,
                 ExpiresIn = refreshTokenExpiryTime,
                 User = UserService.MapToDto(user)
@@ -182,7 +228,7 @@ namespace MeetingRoom.Api.Services
             }
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(UserEntity userEntity)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
@@ -190,10 +236,10 @@ namespace MeetingRoom.Api.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-                    new Claim(ClaimTypes.Role, user.Role.ToString()),
-                    new Claim("id", user.Id.ToString())
+                    new Claim(ClaimTypes.Name, userEntity.Username),
+                    new Claim(ClaimTypes.Email, userEntity.Email ?? string.Empty),
+                    new Claim(ClaimTypes.Role, userEntity.Role.ToString()),
+                    new Claim("id", userEntity.Id.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiresMinutes),
                 SigningCredentials = new SigningCredentials(

@@ -3,11 +3,11 @@ using MeetingRoom.Api.Models;
 
 namespace MeetingRoom.Api.Repositories
 {
-    public interface IUserRepository : IRepository<User>
+    public interface IUserRepository : IRepository<UserEntity>
     {
-        Task<PagedResult<User>> SearchAsync(UserSearchRequest userSearch);
-        Task<User?> GetByUsernameAsync(string username);
-        Task<User?> GetByEmailAsync(string email);
-        Task<User?> GetByRefreshTokenAsync(string refreshToken);
+        Task<PagedResult<UserEntity>> SearchAsync(UserSearchRequest userSearch);
+        Task<UserEntity?> GetByUsernameAsync(string username);
+        Task<UserEntity?> GetByEmailAsync(string email);
+        Task<UserEntity?> GetByRefreshTokenAsync(string refreshToken);
     }
 }
