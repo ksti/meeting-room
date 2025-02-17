@@ -25,7 +25,7 @@ import {
   EventNote as EventNoteIcon,
   AccountCircle as AccountCircleIcon,
 } from '@mui/icons-material';
-import { useRouter } from 'next/router';
+import { useRouter, usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/redux/store';
 import { logout } from '@/lib/redux/slices/authSlice';
@@ -38,6 +38,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.auth.user);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -81,15 +82,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={router.pathname === item.path}
-              onClick={() => router.push(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
+          <ListItemButton
+            key={item.text}
+            selected={pathname === item.path}
+            onClick={() => router.push(item.path)}
+          >
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItemButton>
         ))}
       </List>
     </div>

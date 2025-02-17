@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
 
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 interface AuthState {
   user: any | null;
   token: string | null;
@@ -21,6 +23,15 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
+      if (useMockData) {
+        return {
+          user: {
+            id: '1',
+            email: ''
+          },
+          token: 'mock-token',
+        };
+      }
       const response = await api.post('/auth/login', credentials);
       localStorage.setItem('token', response.data.token);
       return response.data;

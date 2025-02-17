@@ -9,7 +9,7 @@ import { login } from '@/lib/redux/slices/authSlice';
 
 const schema = z.object({
   email: z.string().email('Invalid email').nonempty({ message: 'Email is required' }),
-  password: z.string().nonempty({ message: 'Password is required' }),
+  password: z.string({required_error: '???'}).nonempty({ message: 'Password is required' }),
 });
 
 interface LoginFormData {

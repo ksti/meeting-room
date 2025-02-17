@@ -29,6 +29,7 @@ body {
     rgb(var(--background-start-rgb)),
     rgb(var(--background-end-rgb))
   );
+  background-repeat: no-repeat;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;

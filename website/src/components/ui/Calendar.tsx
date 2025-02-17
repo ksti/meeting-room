@@ -16,6 +16,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/redux/store';
 import { Meeting } from '@/lib/redux/slices/meetingSlice';
+import CalendarComponent from '@/components/ui/CalendarComponent';
 
 interface CalendarProps {
   onDateSelect?: (date: Date) => void;
@@ -61,7 +62,7 @@ export default function Calendar({ onDateSelect, selectedDate }: CalendarProps) 
         </IconButton>
       </Box>
 
-      <>...</>
+      <CalendarComponent></CalendarComponent>
     </Paper>
   );
 }

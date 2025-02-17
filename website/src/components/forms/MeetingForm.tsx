@@ -12,6 +12,9 @@ import {
   MenuItem,
   Autocomplete,
 } from '@mui/material';
+import dayjs, { Dayjs } from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/redux/store';
@@ -143,11 +146,13 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
         name="startTime"
         control={control}
         render={({ field }) => (
-          <DateTimePicker
-            label="Start Time"
-            {...field}
-            sx={{ mt: 2, width: '100%' }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Start Time"
+              {...field}
+              sx={{ mt: 2, width: '100%' }}
+            />
+          </LocalizationProvider>
         )}
       />
 
