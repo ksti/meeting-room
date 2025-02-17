@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   TextField,
   Button,
@@ -19,16 +19,16 @@ import { createMeeting, updateMeeting } from '@/lib/redux/slices/meetingSlice';
 import { Room } from '@/lib/redux/slices/roomSlice';
 import { User } from '@/lib/redux/slices/userSlice';
 
-const schema = yup.object().shape({
-  title: yup.string().required('Title is required'),
-  description: yup.string().required('Description is required'),
-  roomId: yup.string().required('Room is required'),
-  startTime: yup.date().required('Start time is required'),
-  endTime: yup
-    .date()
-    .required('End time is required')
-    .min(yup.ref('startTime'), 'End time must be after start time'),
-  attendees: yup.array().of(yup.string().required()).min(1, 'At least one attendee is required').required('Attendees are required'),
+const schema = z.object({
+  title: z.string({ required_error: 'Title is required' }),
+  description: z.string({ required_error: 'Description is required' }),
+  roomId: z.string({ required_error: 'Room is required' }),
+  startTime: z.date({ required_error: 'Start time is required' }),
+  endTime: z.date({ required_error: 'End time is required' }),
+  attendees: z.array(z.string({ required_error: 'Attendees are required' })).min(1, 'At least one attendee is required'),
+}).refine((data) => data.endTime > data.startTime, {
+  message: "End time must be after start time.",
+  path: ["endTime"],
 });
 
 interface MeetingFormData {
@@ -57,7 +57,7 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
     control,
     formState: { errors },
   } = useForm<MeetingFormData>({
-    resolver: yupResolver(schema),
+    resolver: zodResolver(schema),
     defaultValues: initialData,
   });
 

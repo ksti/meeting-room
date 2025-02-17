@@ -1,15 +1,15 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { TextField, Button, Box, Typography } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/lib/redux/store';
 import { login } from '@/lib/redux/slices/authSlice';
 
-const schema = yup.object().shape({
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().required('Password is required'),
+const schema = z.object({
+  email: z.string().email('Invalid email').nonempty({ message: 'Email is required' }),
+  password: z.string().nonempty({ message: 'Password is required' }),
 });
 
 interface LoginFormData {
@@ -24,7 +24,7 @@ export default function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: yupResolver(schema),
+    resolver: zodResolver(schema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
