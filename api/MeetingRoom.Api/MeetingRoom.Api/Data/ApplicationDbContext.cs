@@ -3,6 +3,7 @@ using MeetingRoom.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace MeetingRoom.Api.Data
 {
@@ -10,6 +11,7 @@ namespace MeetingRoom.Api.Data
     {
         public new DbSet<UserEntity> Users { get; set; } = null!;
         public DbSet<TokenEntity> Tokens { get; set; } = null!;
+        public DbSet<DeviceEntity> Devices { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -35,13 +37,25 @@ namespace MeetingRoom.Api.Data
                         .IsRequired();
 
                     modelBuilder.Entity(entityType.ClrType)
-                        .Property("ModifiedBy")
+                        .Property("UpdatedBy")
                         .IsRequired(false);
 
                     modelBuilder.Entity(entityType.ClrType)
                         .Property("IsDeleted")
                         .IsRequired()
                         .HasDefaultValue(false);
+
+                    var property = entityType.FindProperty("IsDeleted");
+                    if (property != null && property.ClrType == typeof(bool))
+                    {
+                        var parameter = Expression.Parameter(entityType.ClrType, "p");
+                        var left = Expression.Property(parameter, property.PropertyInfo!);
+                        Expression<Func<bool>> isDeleted = () => false;
+                        var right = isDeleted.Body;
+                        var filter = Expression.Lambda(Expression.Equal(left, right), parameter);
+                        
+                        modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+                    }
                 }
             }
 
@@ -69,6 +83,8 @@ namespace MeetingRoom.Api.Data
                     .WithOne(e => e.User)
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasQueryFilter(e => !e.IsDeleted);
             });
 
             // Tokens
@@ -81,7 +97,8 @@ namespace MeetingRoom.Api.Data
                 entity.Property(e => e.AccessToken).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.RefreshToken).HasMaxLength(500);
                 entity.Property(e => e.TokenType).HasMaxLength(50);
-                entity.Property(e => e.ExpiresAt);
+                entity.Property(e => e.AccessTokenExpiresAt);
+                entity.Property(e => e.RefreshTokenExpiresAt);
 
             });
 
@@ -105,7 +122,8 @@ namespace MeetingRoom.Api.Data
 
                 entity.HasOne(e => e.Token)
                     .WithOne(e => e.Device)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .HasForeignKey<TokenEntity>(e => e.DeviceId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

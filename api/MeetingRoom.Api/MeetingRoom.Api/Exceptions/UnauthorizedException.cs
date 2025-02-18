@@ -1,6 +1,6 @@
 ﻿namespace MeetingRoom.Api.Exceptions
 {
-    public class UnauthorizedException(string message) : BusinessException(message)
+    public class NotFoundException(string message = "Not found") : BusinessException(message)
     {
     }
 }

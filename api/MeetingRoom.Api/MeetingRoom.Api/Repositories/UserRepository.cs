@@ -11,7 +11,7 @@ namespace MeetingRoom.Api.Repositories
     {
         private readonly ApplicationDbContext _context;
 
-        public UserRepository(ApplicationDbContext context, IDbConnection connection)
+        public UserRepository(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -85,7 +85,7 @@ namespace MeetingRoom.Api.Repositories
             };
         }
 
-        public async Task<UserEntity?> GetByIdAsync(int id)
+        public async Task<UserEntity?> GetByIdAsync(string id)
         {
             return await _context.Users.FindAsync(id);
         }
@@ -99,7 +99,7 @@ namespace MeetingRoom.Api.Repositories
         public async Task<UserEntity?> GetByEmailAsync(string email)
         {
             return await _context.Users
-                .FirstOrDefaultAsync(u => !u.IsDeleted && u.Email != null && u.Email.ToLower() == email.ToLower());
+                .FirstOrDefaultAsync(u => !u.IsDeleted && u.Email.ToLower() == email.ToLower());
         }
 
         public async Task<UserEntity?> GetByRefreshTokenAsync(string refreshToken)
@@ -122,14 +122,13 @@ namespace MeetingRoom.Api.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(string id)
         {
-            var user = await GetByIdAsync(id);
+            var user = await _context.Users.FindAsync(id);
             if (user != null)
             {
                 user.IsDeleted = true;
                 user.UpdatedAt = DateTime.UtcNow;
-                user.Status = "active";
                 await _context.SaveChangesAsync();
             }
         }

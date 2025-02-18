@@ -4,7 +4,7 @@ namespace MeetingRoom.Api.Common
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string? CreatedBy { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }

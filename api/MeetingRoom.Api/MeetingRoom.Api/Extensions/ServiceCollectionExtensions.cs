@@ -10,7 +10,7 @@ using MeetingRoom.Api.Services;
 using MeetingRoom.Api.Settings;
 using Newtonsoft.Json;
 
-namespace MeetingRoom.Api.Extentions
+namespace MeetingRoom.Api.Extensions
 {
     public static class ServiceCollectionExtensions
     {
@@ -24,19 +24,25 @@ namespace MeetingRoom.Api.Extentions
                 )
             );
 
-            // Repositories
-            services.AddScoped<IUserRepository, UserRepository>();
-
-            // Application Services
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IUserService, UserService>();
-
             // Configuration
             var jwtSettings = new JwtSettings();
             configuration.GetSection(nameof(JwtSettings)).Bind(jwtSettings);
 
             services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
             services.Configure<ApiSettings>(configuration.GetSection(nameof(ApiSettings)));
+            services.AddSingleton<JwtSettings>();
+            services.AddSingleton<ApiSettings>();
+
+            // Repositories
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ITokenRepository, TokenRepository>();
+            services.AddScoped<IDeviceRepository, DeviceRepository>();
+
+            // Application Services
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
 
             // JWT Authentication
             var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);

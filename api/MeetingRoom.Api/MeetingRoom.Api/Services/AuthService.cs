@@ -5,20 +5,24 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MeetingRoom.Api.Enums;
 using MeetingRoom.Api.Exceptions;
+using MeetingRoom.Api.Extensions;
 using MeetingRoom.Api.Models;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi.Extensions;
 
 namespace MeetingRoom.Api.Services
 {
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ITokenRepository _tokenRepository;
         private readonly JwtSettings _jwtSettings;
 
-        public AuthService(IUserRepository userRepository, JwtSettings jwtSettings)
+        public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, JwtSettings jwtSettings)
         {
             _userRepository = userRepository;
+            _tokenRepository = tokenRepository;
             _jwtSettings = jwtSettings;
         }
 
@@ -30,25 +34,19 @@ namespace MeetingRoom.Api.Services
                 throw new BusinessException("Invalid email or password");
             }
 
-            if (user.Status == UserStatus.Disabled)
+            if (user.Status == UserStatus.Disabled.GetDisplayName())
             {
                 throw new BusinessException("User account is disabled");
             }
 
-            var token = GenerateJwtToken(user);
-            var refreshToken = GenerateRefreshToken();
-            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = refreshTokenExpiryTime;
-            await _userRepository.UpdateAsync(user);
+            var tokenEntity = await GenerateNewToken(user);
 
             return new AuthResult
             {
-                AccessToken = token,
-                RefreshToken = refreshToken,
-                ExpiresIn = refreshTokenExpiryTime,
-                User = UserService.MapToDto(user)
+                AccessToken = tokenEntity.AccessToken,
+                RefreshToken = tokenEntity.RefreshToken,
+                ExpiresIn = tokenEntity.AccessTokenExpiresAt,
+                User = user.MapToModel()
             };
         }
 
@@ -65,64 +63,46 @@ namespace MeetingRoom.Api.Services
                 throw new BusinessException("User account is disabled");
             }
 
-            var token = GenerateJwtToken(user);
-            var refreshToken = GenerateRefreshToken();
-            var accessTokenExpiryTime = DateTime.UtcNow.AddMinutes(30);
-            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-            user.Tokens.Add(new TokenEntity
-            {
-                AccessToken = token,
-                RefreshToken = refreshToken,
-                AccessTokenExpiresAt = accessTokenExpiryTime,
-                RefreshTokenExpiresAt = refreshTokenExpiryTime,
-            });
-            await _userRepository.UpdateAsync(user);
+            var tokenEntity = await GenerateNewToken(user);
 
             return new AuthResult
             {
-                AccessToken = token,
-                RefreshToken = refreshToken,
-                ExpiresIn = refreshTokenExpiryTime,
-                User = UserService.MapToDto(user)
+                AccessToken = tokenEntity.AccessToken,
+                RefreshToken = tokenEntity.RefreshToken,
+                ExpiresIn = tokenEntity.AccessTokenExpiresAt,
+                User = user.MapToModel()
             };
         }
 
-        public async Task<AuthResult> CreateAsync(IdentityUser user, string password)
+        public async Task<AuthResult> CreateAsync(UserRegisterRequest request, string operatorId)
         {
-            var existedUser = await _userRepository.GetByEmailAsync(user.Email);
+            var existedUser = await _userRepository.GetByEmailAsync(request.Email!);
             if (existedUser != null)
             {
                 throw new BusinessException("User already existed");
             }
 
-            var userEntity = new UserEntity
+            var newUser = new UserEntity
             {
-                Username = user.UserName,
-                Email = user.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                Username = request.Username,
+                Role = request.Role,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+
             };
+            newUser.SetCreated(operatorId);
+            await _userRepository.CreateAsync(newUser);
 
-            var token = GenerateJwtToken(userEntity);
-            var refreshToken = GenerateRefreshToken();
-            var accessTokenExpiryTime = DateTime.UtcNow.AddMinutes(30);
-            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-            userEntity.Tokens.Add(new TokenEntity
-            {
-                AccessToken = token,
-                RefreshToken = refreshToken,
-                AccessTokenExpiresAt = accessTokenExpiryTime,
-                RefreshTokenExpiresAt = refreshTokenExpiryTime,
-            });
-            await _userRepository.UpdateAsync(userEntity);
+            var tokenEntity = await GenerateNewToken(newUser);
 
             return new AuthResult
             {
-                AccessToken = token,
-                RefreshToken = refreshToken,
-                ExpiresIn = refreshTokenExpiryTime,
-                User = UserService.MapToDto(user)
+                AccessToken = tokenEntity.AccessToken,
+                RefreshToken = tokenEntity.RefreshToken,
+                ExpiresIn = tokenEntity.AccessTokenExpiresAt,
+                User = newUser.MapToModel()
             };
         }
 
@@ -166,25 +146,19 @@ namespace MeetingRoom.Api.Services
         public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
         {
             var user = await _userRepository.GetByRefreshTokenAsync(refreshToken);
-            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            if (user == null || user.Tokens.First(t => t.RefreshToken == refreshToken).RefreshTokenExpiresAt <= DateTime.UtcNow)
             {
                 throw new BusinessException("Invalid refresh token");
             }
 
-            var token = GenerateJwtToken(user);
-            var newRefreshToken = GenerateRefreshToken();
-            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-            user.RefreshToken = newRefreshToken;
-            user.RefreshTokenExpiryTime = refreshTokenExpiryTime;
-            await _userRepository.UpdateAsync(user);
+            var tokenEntity = await GenerateNewToken(user);
 
             return new AuthResult
             {
-                AccessToken = token,
-                RefreshToken = newRefreshToken,
-                ExpiresIn = refreshTokenExpiryTime,
-                User = UserService.MapToDto(user)
+                AccessToken = tokenEntity.AccessToken,
+                RefreshToken = tokenEntity.RefreshToken,
+                ExpiresIn = tokenEntity.AccessTokenExpiresAt,
+                User = user.MapToModel()
             };
         }
 
@@ -196,8 +170,7 @@ namespace MeetingRoom.Api.Services
                 return false;
             }
 
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = null;
+            user.Tokens = new List<TokenEntity>();
             await _userRepository.UpdateAsync(user);
             return true;
         }
@@ -237,9 +210,9 @@ namespace MeetingRoom.Api.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, userEntity.Username),
-                    new Claim(ClaimTypes.Email, userEntity.Email ?? string.Empty),
-                    new Claim(ClaimTypes.Role, userEntity.Role.ToString()),
-                    new Claim("id", userEntity.Id.ToString())
+                    new Claim(ClaimTypes.Email, userEntity.Email),
+                    new Claim(ClaimTypes.Role, userEntity.Role),
+                    new Claim("id", userEntity.Id)
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiresMinutes),
                 SigningCredentials = new SigningCredentials(
@@ -256,6 +229,34 @@ namespace MeetingRoom.Api.Services
         private string GenerateRefreshToken()
         {
             return Guid.NewGuid().ToString();
+        }
+
+        private async Task<TokenEntity> GenerateNewToken(UserEntity user)
+        {
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+            var accessTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiresMinutes);
+            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
+
+            if (user.Tokens.Count > _jwtSettings.MaxAllowedDevices)
+            {
+                var old = user.Tokens.MinBy(t => t.CreatedAt)!;
+                user.Tokens.Remove(old);
+                //await _tokenRepository.DeleteAsync(old.Id);
+            }
+
+            var newTokenEntity = new TokenEntity
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                AccessTokenExpiresAt = accessTokenExpiryTime,
+                RefreshTokenExpiresAt = refreshTokenExpiryTime,
+            };
+            await _tokenRepository.CreateAsync(newTokenEntity);
+            //user.Tokens.Add(newTokenEntity);
+            await _userRepository.UpdateAsync(user);
+
+            return newTokenEntity;
         }
     }
 }

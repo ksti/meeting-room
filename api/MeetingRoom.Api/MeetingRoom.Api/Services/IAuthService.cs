@@ -15,6 +15,6 @@ namespace MeetingRoom.Api.Services
         Task<AuthResult> RefreshTokenAsync(string requestRefreshToken);
         Task<bool> CheckAuthStatusAsync(string token);
 
-        Task<AuthResult> CreateAsync(IdentityUser user, string password);
+        Task<AuthResult> CreateAsync(UserRegisterRequest request, string operatorId);
     }
 }
