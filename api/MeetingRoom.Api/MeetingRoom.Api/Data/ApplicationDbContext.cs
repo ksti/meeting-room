@@ -16,7 +16,7 @@ namespace MeetingRoom.Api.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-            optionsBuilder.UseMySql(ServerVersion.AutoDetect(connectionString));
+            optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
