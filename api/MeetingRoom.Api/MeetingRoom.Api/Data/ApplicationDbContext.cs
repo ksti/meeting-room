@@ -12,6 +12,9 @@ namespace MeetingRoom.Api.Data
         public new DbSet<UserEntity> Users { get; set; } = null!;
         public DbSet<TokenEntity> Tokens { get; set; } = null!;
         public DbSet<DeviceEntity> Devices { get; set; } = null!;
+        public DbSet<RoomEntity> Rooms { get; set; } = null!;
+        public DbSet<MeetingEntity> Meetings { get; set; } = null!;
+        public DbSet<MeetingUserEntity> UserMeetings { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -72,7 +75,7 @@ namespace MeetingRoom.Api.Data
                 entity.Property(e => e.FirstName).HasMaxLength(100);
                 entity.Property(e => e.LastName).HasMaxLength(100);
                 entity.Property(e => e.PasswordHash).HasMaxLength(500);
-                entity.Property(e => e.Status).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(20);
 
                 entity.HasMany(e => e.Tokens)
                     .WithOne(e => e.User)
@@ -114,6 +117,7 @@ namespace MeetingRoom.Api.Data
                 entity.Property(e => e.Platform).HasMaxLength(50);
                 entity.Property(e => e.OperatingSystem).HasMaxLength(50);
                 entity.Property(e => e.OsVersion).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(20);
 
                 entity.HasOne(e => e.User)
                     .WithMany(e => e.Devices)
@@ -124,6 +128,46 @@ namespace MeetingRoom.Api.Data
                     .WithOne(e => e.Device)
                     .HasForeignKey<TokenEntity>(e => e.DeviceId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Meetings
+            modelBuilder.Entity<MeetingEntity>(entity =>
+            {
+                entity.ToTable("Meetings");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Name);
+
+                entity.Property(e => e.Capacity);
+                entity.Property(e => e.StarTime);
+                entity.Property(e => e.EndTime);
+                entity.Property(e => e.Status).HasMaxLength(20);
+
+                entity.HasMany(e => e.Participants)
+                    .WithOne(e => e.Meeting)
+                    .HasForeignKey(e => e.MeetingId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Room);
+            });
+
+            // Rooms
+            modelBuilder.Entity<RoomEntity>(entity =>
+            {
+                entity.ToTable("Rooms");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Name);
+
+                entity.Property(e => e.Capacity);
+                entity.Property(e => e.Status).HasMaxLength(20);
+            });
+
+            // UserMeetings
+            modelBuilder.Entity<MeetingUserEntity>(entity =>
+            {
+                entity.ToTable("UserMeetings");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.MeetingId);
             });
         }
     }
