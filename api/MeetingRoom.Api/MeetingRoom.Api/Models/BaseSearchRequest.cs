@@ -2,7 +2,7 @@
 
 namespace MeetingRoom.Api.Models
 {
-    public class UserSearchRequest
+    public class BaseSearchRequest
     {
         public int Page { get; set; } = 1;
 

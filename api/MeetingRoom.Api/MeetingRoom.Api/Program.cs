@@ -1,8 +1,8 @@
 using MeetingRoom.Api.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System;
 using MeetingRoom.Api.Data;
+using MeetingRoom.Api.Middleware;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,6 +60,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Add global exception handling middleware
+app.UseGlobalExceptionMiddleware();
 
 // Ensure authentication middleware is before authorization middleware
 app.UseAuthentication();

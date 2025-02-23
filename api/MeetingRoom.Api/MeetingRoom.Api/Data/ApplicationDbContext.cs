@@ -14,7 +14,6 @@ namespace MeetingRoom.Api.Data
         public DbSet<DeviceEntity> Devices { get; set; } = null!;
         public DbSet<RoomEntity> Rooms { get; set; } = null!;
         public DbSet<MeetingEntity> Meetings { get; set; } = null!;
-        public DbSet<MeetingUserEntity> UserMeetings { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -37,7 +36,7 @@ namespace MeetingRoom.Api.Data
 
                     modelBuilder.Entity(entityType.ClrType)
                         .Property("CreatedBy")
-                        .IsRequired();
+                        .IsRequired(false);
 
                     modelBuilder.Entity(entityType.ClrType)
                         .Property("UpdatedBy")
@@ -77,16 +76,6 @@ namespace MeetingRoom.Api.Data
                 entity.Property(e => e.PasswordHash).HasMaxLength(500);
                 entity.Property(e => e.Status).HasMaxLength(20);
 
-                entity.HasMany(e => e.Tokens)
-                    .WithOne(e => e.User)
-                    .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasMany(e => e.Devices)
-                    .WithOne(e => e.User)
-                    .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
                 entity.HasQueryFilter(e => !e.IsDeleted);
             });
 
@@ -103,6 +92,11 @@ namespace MeetingRoom.Api.Data
                 entity.Property(e => e.AccessTokenExpiresAt);
                 entity.Property(e => e.RefreshTokenExpiresAt);
 
+                entity.HasOne(e => e.User)
+                    .WithMany(e => e.Tokens)
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
             });
 
             // Devices
@@ -110,9 +104,10 @@ namespace MeetingRoom.Api.Data
             {
                 entity.ToTable("Devices");
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.DeviceName).IsUnique();
+                entity.HasIndex(e => e.DeviceIdentifier);
                 entity.HasIndex(e => e.Platform);
 
+                entity.Property(e => e.DeviceIdentifier).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.DeviceName).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.Platform).HasMaxLength(50);
                 entity.Property(e => e.OperatingSystem).HasMaxLength(50);
@@ -123,11 +118,6 @@ namespace MeetingRoom.Api.Data
                     .WithMany(e => e.Devices)
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(e => e.Token)
-                    .WithOne(e => e.Device)
-                    .HasForeignKey<TokenEntity>(e => e.DeviceId)
-                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // Meetings
@@ -137,17 +127,21 @@ namespace MeetingRoom.Api.Data
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Name);
 
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.Capacity);
                 entity.Property(e => e.StarTime);
                 entity.Property(e => e.EndTime);
                 entity.Property(e => e.Status).HasMaxLength(20);
 
-                entity.HasMany(e => e.Participants)
-                    .WithOne(e => e.Meeting)
-                    .HasForeignKey(e => e.MeetingId)
+                entity.HasOne(e => e.Room)
+                    .WithMany(e => e.Meetings)
+                    .HasForeignKey(e => e.RoomId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.Room);
+                entity.HasMany(e => e.Participants)
+                    .WithMany(e => e.Meetings)
+                    .UsingEntity(j => j.ToTable("MeetingUsers"));
             });
 
             // Rooms
@@ -157,17 +151,10 @@ namespace MeetingRoom.Api.Data
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Name);
 
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.Capacity);
                 entity.Property(e => e.Status).HasMaxLength(20);
-            });
-
-            // UserMeetings
-            modelBuilder.Entity<MeetingUserEntity>(entity =>
-            {
-                entity.ToTable("UserMeetings");
-                entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.UserId);
-                entity.HasIndex(e => e.MeetingId);
             });
         }
     }

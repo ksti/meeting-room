@@ -30,7 +30,7 @@ namespace MeetingRoom.Api.Controllers
 
         // POST api/<UsersController>
         [HttpPost]
-        public async Task<ApiResponse<UserModel>> Post([FromBody] UserRegisterRequest request)
+        public async Task<ApiResponse<UserModel>> Post([FromBody] UserCreateRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -45,6 +45,7 @@ namespace MeetingRoom.Api.Controllers
         [HttpPut("{id}")]
         public async Task<ApiResponse<bool>> Put(string id, [FromBody] UserUpdateRequest request)
         {
+            request.Id = id;
             var currentUser = await currentUserService.GetCurrentUserAsync();
             await userService.UpdateUserPartialAsync(request, currentUser!.Id);
             return ApiResponse<bool>.Ok(true);

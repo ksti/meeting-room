@@ -10,11 +10,11 @@ namespace MeetingRoom.Api.Services
         Task<bool> ResetPasswordAsync(string email, string newPassword);
         Task<bool> LogoutAsync(string email);
 
-        Task<AuthResult> LoginAsync(string email, string password);
-        Task<AuthResult> LoginByUsernameAsync(string username, string password);
-        Task<AuthResult> RefreshTokenAsync(string requestRefreshToken);
+        Task<AuthResult> LoginAsync(string email, string password, DeviceInfo deviceInfo);
+        Task<AuthResult> LoginByUsernameAsync(string username, string password, DeviceInfo deviceInfo);
+        Task<AuthResult> RefreshTokenAsync(string userId, string requestRefreshToken, DeviceInfo deviceInfo);
         Task<bool> CheckAuthStatusAsync(string token);
 
-        Task<AuthResult> CreateAsync(UserRegisterRequest request, string operatorId);
+        Task<AuthResult> RegisterAsync(UserCreateRequest request, DeviceInfo deviceInfo);
     }
 }

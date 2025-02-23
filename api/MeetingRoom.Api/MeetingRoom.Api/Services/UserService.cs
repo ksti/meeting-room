@@ -8,12 +8,12 @@ namespace MeetingRoom.Api.Services
 {
     public class UserService(IUserRepository userRepository) : IUserService
     {
-        public async Task<UserModel> CreateUserAsync(UserRegisterRequest request, string operatorId)
+        public async Task<UserModel> CreateUserAsync(UserCreateRequest request, string operatorId)
         {
-            var existedUser = await userRepository.GetByEmailAsync(request.Email);
-            if (existedUser != null) throw new BusinessException("User already existed");
+            var old = await userRepository.GetByEmailAsync(request.Email);
+            if (old != null) throw new BusinessException("User already existed");
 
-            var newUser = new UserEntity
+            var newEntity = new UserEntity
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
@@ -23,9 +23,9 @@ namespace MeetingRoom.Api.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
 
             };
-            newUser.SetCreated(operatorId);
-            await userRepository.CreateAsync(newUser);
-            return newUser.MapToModel();
+            newEntity.SetCreated(operatorId);
+            await userRepository.CreateAsync(newEntity);
+            return newEntity.MapToModel();
         }
 
         public async Task DeleteUserAsync(string id)
@@ -35,14 +35,14 @@ namespace MeetingRoom.Api.Services
 
         public async Task<UserModel?> GetUserByIdAsync(string id)
         {
-            var userEntity = await userRepository.GetByIdAsync(id);
-            return userEntity?.MapToModel();
+            var entity = await userRepository.GetByIdAsync(id);
+            return entity?.MapToModel();
         }
 
         public async Task<UserModel?> GetUserByEmailAsync(string email)
         {
-            var userEntity = await userRepository.GetByEmailAsync(email);
-            return userEntity?.MapToModel();
+            var entity = await userRepository.GetByEmailAsync(email);
+            return entity?.MapToModel();
         }
 
         public async Task<PagedResult<UserModel>> SearchAsync(UserSearchRequest request)
@@ -57,32 +57,32 @@ namespace MeetingRoom.Api.Services
             };
         }
 
-        public async Task<UserModel> UpdateUserAsync(UserRegisterRequest request, string operatorId)
+        public async Task<UserModel> UpdateUserAsync(UserCreateRequest request, string operatorId)
         {
             return await UpdateUserPartialAsync(request, operatorId);
         }
 
         public async Task<UserModel> UpdateUserPartialAsync(UserUpdateRequest request, string operatorId)
         {
-            var existedUser = await userRepository.GetByEmailAsync(request.Email);
-            if (existedUser == null) throw new NotFoundException();
+            var old = await userRepository.GetByIdAsync(request.Id);
+            if (old == null) throw new NotFoundException();
 
             if (!string.IsNullOrEmpty(request.FirstName))
-                existedUser.FirstName = request.FirstName;
+                old.FirstName = request.FirstName;
             if (!string.IsNullOrEmpty(request.LastName))
-                existedUser.LastName = request.LastName;
+                old.LastName = request.LastName;
             if (!string.IsNullOrEmpty(request.Email))
-                existedUser.Email = request.Email;
+                old.Email = request.Email;
             if (!string.IsNullOrEmpty(request.Role))
-                existedUser.Role = request.Role;
+                old.Role = request.Role;
             if (!string.IsNullOrEmpty(request.Username))
-                existedUser.Username = request.Username;
+                old.Username = request.Username;
             if (!string.IsNullOrEmpty(request.Password))
-                existedUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                old.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            existedUser.SetModified(operatorId);
-            await userRepository.UpdateAsync(existedUser);
-            return existedUser.MapToModel();
+            old.SetModified(operatorId);
+            await userRepository.UpdateAsync(old);
+            return old.MapToModel();
         }
     }
 }

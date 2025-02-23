@@ -18,6 +18,12 @@ namespace MeetingRoom.Api.Repositories
             return await _context.Tokens.FindAsync(id);
         }
 
+        public async Task<TokenEntity?> GetByRefreshTokenAsync(string refreshToken)
+        {
+            return await _context.Tokens
+                .FirstOrDefaultAsync(e => e.RefreshToken == refreshToken);
+        }
+
         public async Task<TokenEntity> CreateAsync(TokenEntity tokenEntity)
         {
             _context.Tokens.Add(tokenEntity);

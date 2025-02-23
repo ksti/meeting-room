@@ -17,16 +17,25 @@ namespace MeetingRoom.Api.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly ITokenRepository _tokenRepository;
+        private readonly IDeviceRepository _deviceRepository;
         private readonly JwtSettings _jwtSettings;
+        private readonly ApiSettings _apiSettings;
 
-        public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, JwtSettings jwtSettings)
+        public AuthService(
+            IUserRepository userRepository, 
+            ITokenRepository tokenRepository,
+            JwtSettings jwtSettings, 
+            ApiSettings apiSettings, 
+            IDeviceRepository deviceRepository)
         {
             _userRepository = userRepository;
             _tokenRepository = tokenRepository;
             _jwtSettings = jwtSettings;
+            _apiSettings = apiSettings;
+            _deviceRepository = deviceRepository;
         }
 
-        public async Task<AuthResult> LoginAsync(string email, string password)
+        public async Task<AuthResult> LoginAsync(string email, string password, DeviceInfo deviceInfo)
         {
             var user = await _userRepository.GetByEmailAsync(email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
@@ -39,7 +48,7 @@ namespace MeetingRoom.Api.Services
                 throw new BusinessException("User account is disabled");
             }
 
-            var tokenEntity = await GenerateNewToken(user);
+            var tokenEntity = await GetAssignedToken(user, deviceInfo);
 
             return new AuthResult
             {
@@ -50,7 +59,7 @@ namespace MeetingRoom.Api.Services
             };
         }
 
-        public async Task<AuthResult> LoginByUsernameAsync(string username, string password)
+        public async Task<AuthResult> LoginByUsernameAsync(string username, string password, DeviceInfo deviceInfo)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
@@ -63,7 +72,7 @@ namespace MeetingRoom.Api.Services
                 throw new BusinessException("User account is disabled");
             }
 
-            var tokenEntity = await GenerateNewToken(user);
+            var tokenEntity = await GetAssignedToken(user, deviceInfo);
 
             return new AuthResult
             {
@@ -74,7 +83,7 @@ namespace MeetingRoom.Api.Services
             };
         }
 
-        public async Task<AuthResult> CreateAsync(UserRegisterRequest request, string operatorId)
+        public async Task<AuthResult> RegisterAsync(UserCreateRequest request, DeviceInfo deviceInfo)
         {
             var existedUser = await _userRepository.GetByEmailAsync(request.Email!);
             if (existedUser != null)
@@ -90,12 +99,14 @@ namespace MeetingRoom.Api.Services
                 Username = request.Username,
                 Role = request.Role,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-
             };
-            newUser.SetCreated(operatorId);
-            await _userRepository.CreateAsync(newUser);
 
             var tokenEntity = await GenerateNewToken(newUser);
+            var device = GenerateDevice(deviceInfo);
+            device.Token = tokenEntity;
+            newUser.Tokens.Add(tokenEntity);
+            newUser.Devices.Add(device);
+            await _userRepository.CreateAsync(newUser);
 
             return new AuthResult
             {
@@ -143,15 +154,16 @@ namespace MeetingRoom.Api.Services
             return true;
         }
 
-        public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
+        public async Task<AuthResult> RefreshTokenAsync(string userId, string refreshToken, DeviceInfo deviceInfo)
         {
-            var user = await _userRepository.GetByRefreshTokenAsync(refreshToken);
-            if (user == null || user.Tokens.First(t => t.RefreshToken == refreshToken).RefreshTokenExpiresAt <= DateTime.UtcNow)
+            var token = await _tokenRepository.GetByRefreshTokenAsync(refreshToken);
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || token == null || token.RefreshTokenExpiresAt < DateTime.UtcNow)
             {
                 throw new BusinessException("Invalid refresh token");
             }
 
-            var tokenEntity = await GenerateNewToken(user);
+            var tokenEntity = await GetAssignedToken(user, deviceInfo, true);
 
             return new AuthResult
             {
@@ -231,19 +243,54 @@ namespace MeetingRoom.Api.Services
             return Guid.NewGuid().ToString();
         }
 
+        private DeviceEntity GenerateDevice(DeviceInfo deviceInfo)
+        {
+            return new DeviceEntity
+            {
+                DeviceIdentifier = deviceInfo.DeviceIdentifier,
+                DeviceName = deviceInfo.DeviceName,
+                AppVersion = deviceInfo.AppVersion,
+                Browser = deviceInfo.Browser,
+                BrowserVersion = deviceInfo.BrowserVersion,
+                Platform = deviceInfo.Platform,
+                OperatingSystem = deviceInfo.OperatingSystem,
+                OsVersion = deviceInfo.OsVersion,
+            };
+        }
+
+        private async Task<TokenEntity> GetAssignedToken(UserEntity user, DeviceInfo deviceInfo, bool isRefreshToken = false)
+        {
+            var device = await _deviceRepository.GetByDeviceIdentifierAsync(deviceInfo.DeviceIdentifier, user.Id);
+
+            if (device is null || device.UserId != user.Id)
+            {
+                device = GenerateDevice(deviceInfo);
+                user.Devices.Add(device);
+            }
+            if (isRefreshToken || device.Token is null || device.Token.AccessTokenExpiresAt < DateTime.UtcNow)
+            {
+                var newTokenEntity = await GenerateNewToken(user);
+                device.Token = newTokenEntity;
+                user.Tokens.Add(newTokenEntity);
+            }
+            if (user.Devices.Count > _jwtSettings.MaxAllowedDevices)
+            {
+                var oldDevice = user.Devices.MinBy(t => t.CreatedAt)!;
+                var oldToken = await _tokenRepository.GetByIdAsync(oldDevice.TokenId);
+                if (oldToken != null) user.Tokens.Remove(oldToken);
+                user.Devices.Remove(oldDevice);
+            }
+            await _userRepository.UpdateAsync(user);
+
+            return device.Token;
+        }
+
         private async Task<TokenEntity> GenerateNewToken(UserEntity user)
         {
             var token = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
             var accessTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiresMinutes);
             var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays);
-
-            if (user.Tokens.Count > _jwtSettings.MaxAllowedDevices)
-            {
-                var old = user.Tokens.MinBy(t => t.CreatedAt)!;
-                user.Tokens.Remove(old);
-                //await _tokenRepository.DeleteAsync(old.Id);
-            }
 
             var newTokenEntity = new TokenEntity
             {
@@ -252,9 +299,6 @@ namespace MeetingRoom.Api.Services
                 AccessTokenExpiresAt = accessTokenExpiryTime,
                 RefreshTokenExpiresAt = refreshTokenExpiryTime,
             };
-            await _tokenRepository.CreateAsync(newTokenEntity);
-            //user.Tokens.Add(newTokenEntity);
-            await _userRepository.UpdateAsync(user);
 
             return newTokenEntity;
         }

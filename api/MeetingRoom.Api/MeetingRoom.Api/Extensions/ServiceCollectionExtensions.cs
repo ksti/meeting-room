@@ -30,7 +30,7 @@ namespace MeetingRoom.Api.Extensions
 
             services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
             services.Configure<ApiSettings>(configuration.GetSection(nameof(ApiSettings)));
-            services.AddSingleton<JwtSettings>();
+            services.AddSingleton(jwtSettings);
             services.AddSingleton<ApiSettings>();
 
             // Repositories

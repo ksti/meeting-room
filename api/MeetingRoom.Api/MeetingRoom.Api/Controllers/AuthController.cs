@@ -13,25 +13,34 @@ namespace MeetingRoom.Api.Controllers
     public class AuthController(ILogger<AuthController> logger, IAuthService authService, ICurrentUserService currentUserService) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<ApiResponse<AuthResult>> Register([FromBody] UserRegisterRequest request)
+        [AllowAnonymous]
+        public async Task<ApiResponse<AuthResult>> Register([FromBody] UserCreateRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return ApiResponse<AuthResult>.BadRequest(ModelState);
             }
-            // create user
-            var currentUser = await currentUserService.GetCurrentUserAsync();
-            var result = await authService.CreateAsync(request, currentUser!.Id);
+            var result = await authService.RegisterAsync(request, request.DeviceInfo);
 
-            return string.IsNullOrEmpty(result.AccessToken) ? ApiResponse<AuthResult>.Ok(result) : ApiResponse<AuthResult>.BadRequest();
+            return ApiResponse<AuthResult>.Ok(result);
         }
 
         [HttpPost("login")]
-        public async Task<ApiResponse<AuthResult>> Login(string email, string password)
+        [AllowAnonymous]
+        public async Task<ApiResponse<AuthResult>> Login(string email, string password, DeviceInfo deviceInfo)
         {
-            var result = await authService.LoginAsync(email, password);
+            var result = await authService.LoginAsync(email, password, deviceInfo);
 
             return ApiResponse<AuthResult>.Ok(result);
+        }
+
+        [HttpPost("logout")]
+        public async Task<ApiResponse<bool>> Logout()
+        {
+            var currentUser = await currentUserService.GetCurrentUserAsync();
+            var result = await authService.LogoutAsync(currentUser!.Email);
+
+            return ApiResponse<bool>.Ok(result);
         }
 
     }

@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MeetingRoom.Api.Common
 {
     public abstract class BaseEntity : IAuditableEntity
     {
+        [MaxLength(36)]
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string? CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -10,7 +13,6 @@ namespace MeetingRoom.Api.Common
         public bool IsDeleted { get; set; }
         public string? DeletedBy { get; set; }
         public DateTime? DeletedAt { get; set; }
-        public string? TenantId { get; set; }
 
         public virtual void SetCreated(string createdBy)
         {

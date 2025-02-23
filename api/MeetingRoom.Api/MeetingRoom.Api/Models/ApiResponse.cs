@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace MeetingRoom.Api.Models
 {
@@ -42,6 +42,36 @@ namespace MeetingRoom.Api.Models
                 .SelectMany(x => x.Errors)
                 .Select(x => x.ErrorMessage));
             return BadRequest(errors);
+        }
+
+        public static ApiResponse<T> NotFound(string message = "Resource not found")
+        {
+            return new ApiResponse<T>
+            {
+                Success = false,
+                Message = message,
+                Code = (int)HttpStatusCode.NotFound
+            };
+        }
+
+        public static ApiResponse<T> Unauthorized(string message = "Unauthorized access")
+        {
+            return new ApiResponse<T>
+            {
+                Success = false,
+                Message = message,
+                Code = (int)HttpStatusCode.Unauthorized
+            };
+        }
+
+        public static ApiResponse<T> InternalError(string message = "An internal server error occurred")
+        {
+            return new ApiResponse<T>
+            {
+                Success = false,
+                Message = message,
+                Code = (int)HttpStatusCode.InternalServerError
+            };
         }
     }
 }

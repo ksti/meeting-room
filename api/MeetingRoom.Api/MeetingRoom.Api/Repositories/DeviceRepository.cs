@@ -18,6 +18,14 @@ namespace MeetingRoom.Api.Repositories
             return await _context.Devices.FindAsync(id);
         }
 
+        public async Task<DeviceEntity?> GetByDeviceIdentifierAsync(string deviceIdentifier, string? userId = null)
+        {
+            return await _context.Devices
+                .Include(e => e.Token)
+                .FirstOrDefaultAsync(e => e.DeviceIdentifier == deviceIdentifier 
+                                          && (userId == null || e.UserId == userId));
+        }
+
         public async Task<DeviceEntity> CreateAsync(DeviceEntity deviceEntity)
         {
             _context.Devices.Add(deviceEntity);

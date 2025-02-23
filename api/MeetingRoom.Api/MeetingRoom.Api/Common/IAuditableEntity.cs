@@ -9,6 +9,5 @@ namespace MeetingRoom.Api.Common
         public bool IsDeleted { get; set; }
         public string? DeletedBy { get; set; }
         public DateTime? DeletedAt { get; set; }
-        public string? TenantId { get; set; }
     }
 }
