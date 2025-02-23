@@ -1,12 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
 
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 export interface Room {
   id: string;
   name: string;
   capacity: number;
   facilities: string[];
   isAvailable: boolean;
+  status: 'idle' | 'inUse' | 'scheduled' | 'unavailable';
 }
 
 interface RoomState {
@@ -25,6 +28,34 @@ const initialState: RoomState = {
 
 export const fetchRooms = createAsyncThunk('rooms/fetchRooms', async (_, { rejectWithValue }) => {
   try {
+    if (useMockData) {
+      return [
+        {
+          id: '1',
+          name: 'Room1',
+          capacity: 10,
+          facilities: ['Whiteboard', 'Projector'],
+          isAvailable: true,
+          status: 'idle',
+        },
+        {
+          id: '2',
+          name: 'Room2',
+          capacity: 10,
+          facilities: ['Whiteboard', 'Projector'],
+          isAvailable: false,
+          status: 'inUse',
+        },
+        {
+          id: '3',
+          name: 'Room3',
+          capacity: 10,
+          facilities: ['Whiteboard', 'Projector'],
+          isAvailable: false,
+          status: 'scheduled',
+        },
+      ];
+    }
     const response = await api.get('/api/rooms');
     return response.data;
   } catch (error: any) {

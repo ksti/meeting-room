@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
 
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 export interface Meeting {
   id: string;
   title: string;
@@ -33,6 +35,43 @@ export const fetchMeetings = createAsyncThunk(
   'meetings/fetchMeetings',
   async (_, { rejectWithValue }) => {
     try {
+      if (useMockData) {
+        return [
+          {
+            id: '1',
+            title: 'Meeting1',
+            description: 'Meeting1 description',
+            roomId: '1',
+            startTime: '2025-02-01T09:00:00',
+            endTime: '2025-02-01T10:00:00',
+            organizer: 'John Doe',
+            attendees: ['Jane Doe', 'Alice'],
+            status: 'completed',
+          },
+          {
+            id: '2',
+            title: 'Meeting2',
+            description: 'Meeting2 description',
+            roomId: '1',
+            startTime: '2025-02-21T09:00:00',
+            endTime: '2025-02-21T10:00:00',
+            organizer: 'John Doe',
+            attendees: ['Jane Doe', 'Alice'],
+            status: 'cancelled',
+          },
+          {
+            id: '3',
+            title: 'Meeting3',
+            description: 'Meeting1 description',
+            roomId: '1',
+            startTime: '2025-02-28T09:00:00',
+            endTime: '2025-02-28T10:00:00',
+            organizer: 'John Doe',
+            attendees: ['Jane Doe', 'Alice'],
+            status: 'scheduled',
+          },
+        ];
+      }
       const response = await api.get('/api/meetings');
       return response.data;
     } catch (error: any) {

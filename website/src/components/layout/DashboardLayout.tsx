@@ -144,9 +144,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             open={Boolean(anchorEl)}
             onClose={handleProfileMenuClose}
           >
-            <MenuItem onClick={() => router.push('/dashboard/profile')}>
+            {/* <MenuItem onClick={() => router.push('/dashboard/profile')}>
               Profile
-            </MenuItem>
+            </MenuItem> */}
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </Menu>
         </Toolbar>
