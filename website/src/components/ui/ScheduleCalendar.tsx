@@ -2,6 +2,7 @@
 
 import { useNextCalendarApp, ScheduleXCalendar } from '@schedule-x/react'
 import {
+  CalendarConfig,
   createViewDay,
   createViewMonthAgenda,
   createViewMonthGrid,
@@ -10,18 +11,19 @@ import {
 import { createEventsServicePlugin } from '@schedule-x/events-service'
 
 import '@schedule-x/theme-default/dist/index.css'
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Meeting } from '@/lib/redux/slices/meetingSlice'
 import dayjs from 'dayjs'
 
 interface ScheduleCalendarProps {
   onMeetingSelect?: (meetingId: string) => void;
   selectedMeeting?: Meeting;
-  mettings?: Meeting[];
+  meetings?: Meeting[];
 }
 
-function CalendarApp({ onMeetingSelect, selectedMeeting, mettings }: ScheduleCalendarProps) {
-  const plugins = [createEventsServicePlugin()]
+function CalendarApp({ onMeetingSelect, selectedMeeting, meetings }: ScheduleCalendarProps) {
+  const eventsServicePlugin = createEventsServicePlugin();
+  const plugins = [eventsServicePlugin];
 
   const calendar = useNextCalendarApp({
     views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
@@ -30,32 +32,32 @@ function CalendarApp({ onMeetingSelect, selectedMeeting, mettings }: ScheduleCal
        * Is called when an event is clicked
        * */
       onEventClick(calendarEvent) {
-        console.log('onEventClick', calendarEvent);
         onMeetingSelect && onMeetingSelect(calendarEvent.id.toString());
       },
     },
     selectedDate: selectedMeeting ? dayjs(selectedMeeting.startTime).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-    events: mettings?.map(meeting => {
+    events: meetings?.map(meeting => {
       return {
         id: meeting.id,
         title: meeting.title,
         start: dayjs(meeting.startTime).format('YYYY-MM-DD HH:mm'),
         end: dayjs(meeting.endTime).format('YYYY-MM-DD HH:mm'),
       }
-    }) ?? [
-        {
-          id: '1',
-          title: 'Meeting 1',
-          start: '2025-02-24',
-          end: '2025-02-25',
-        },
-      ],
-  }, plugins)
+    }) ?? [],
+  }, plugins);
 
   useEffect(() => {
+    calendar?.events.set(meetings?.map(meeting => {
+      return {
+        id: meeting.id,
+        title: meeting.title,
+        start: dayjs(meeting.startTime).format('YYYY-MM-DD HH:mm'),
+        end: dayjs(meeting.endTime).format('YYYY-MM-DD HH:mm'),
+      }
+    }) ?? []);
     // get all events
-    calendar?.events.getAll()
-  }, [])
+    // calendar?.events.getAll();
+  }, [meetings])
 
   return (
     <div>

@@ -26,13 +26,16 @@ const schema = z.object({
   title: z.string({ required_error: 'Title is required' }),
   description: z.string({ required_error: 'Description is required' }),
   roomId: z.string({ required_error: 'Room is required' }),
-  startTime: z.date({ required_error: 'Start time is required' }),
-  endTime: z.date({ required_error: 'End time is required' }),
+  startTime: z.custom<Dayjs>((val) => val instanceof dayjs, 'Invalid date for start time'),
+  endTime: z.custom<Dayjs>((val) => val instanceof dayjs, 'Invalid date for end time'),
   attendees: z.array(z.object({
     id: z.string({ required_error: 'User id is required' }),
-    usermane: z.string({ required_error: 'Username is required' }),
+    username: z.string({ required_error: 'Username is required' }),
   })).min(1, 'At least one attendee is required'),
-}).refine((data) => data.endTime > data.startTime, {
+}).refine((data) => {
+  // console.log('Data:', data);
+  return data.endTime > data.startTime;
+}, {
   message: "End time must be after start time.",
   path: ["endTime"],
 });
@@ -64,7 +67,14 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
     formState: { errors },
   } = useForm<MeetingFormData>({
     resolver: zodResolver(schema),
-    defaultValues: initialData,
+    defaultValues: initialData ?? {
+      title: '',
+      description: '',
+      roomId: '',
+      startTime: dayjs(),
+      endTime: dayjs(),
+      attendees: [],
+    },
   });
 
   const onSubmit = async (data: MeetingFormData) => {
@@ -154,6 +164,12 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
               label="Start Time"
               {...field}
               sx={{ mt: 2, width: '100%' }}
+              slotProps={{
+                textField: {
+                  helperText: errors.startTime?.message,
+                  error: !!errors.startTime?.message,
+                },
+              }}
             />
           </LocalizationProvider>
         )}
@@ -168,6 +184,12 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
               label="End Time"
               {...field}
               sx={{ mt: 2, width: '100%' }}
+              slotProps={{
+                textField: {
+                  helperText: errors.endTime?.message,
+                  error: !!errors.endTime?.message,
+                },
+              }}
             />
           </LocalizationProvider>
         )}
