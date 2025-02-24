@@ -1,5 +1,115 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
+import { User } from './userSlice';
+
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+let mockMeetings: Meeting[] = [
+  {
+    id: '1',
+    title: 'Meeting1',
+    description: 'Meeting1 description',
+    roomId: '1',
+    startTime: '2025-02-01T09:00:00',
+    endTime: '2025-02-01T10:00:00',
+    organizer: {
+      id: '1',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    },
+    attendees: [{
+      id: '1',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    }, {
+      id: '2',
+      username: 'johndoe',
+      firstName: 'Alice',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    }],
+    status: 'completed',
+  },
+  {
+    id: '2',
+    title: 'Meeting2',
+    description: 'Meeting2 description',
+    roomId: '1',
+    startTime: '2025-02-21T09:00:00',
+    endTime: '2025-02-21T10:00:00',
+    organizer: {
+      id: '1',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    },
+    attendees: [{
+      id: '1',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    }, {
+      id: '2',
+      username: 'johndoe',
+      firstName: 'Alice',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    }],
+    status: 'cancelled',
+  },
+  {
+    id: '3',
+    title: 'Meeting3',
+    description: 'Meeting1 description',
+    roomId: '1',
+    startTime: '2025-02-28T09:00:00',
+    endTime: '2025-02-28T10:00:00',
+    organizer: {
+      id: '1',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    },
+    attendees: [{
+      id: '1',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    }, {
+      id: '2',
+      username: 'johndoe',
+      firstName: 'Alice',
+      lastName: 'Doe',
+      email: '',
+      status: 'active',
+      role: 'user',
+    }],
+    status: 'scheduled',
+  },
+];
 
 export interface Meeting {
   id: string;
@@ -8,8 +118,8 @@ export interface Meeting {
   roomId: string;
   startTime: string;
   endTime: string;
-  organizer: string;
-  attendees: string[];
+  organizer: User;
+  attendees: User[];
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
 }
 
@@ -33,6 +143,9 @@ export const fetchMeetings = createAsyncThunk(
   'meetings/fetchMeetings',
   async (_, { rejectWithValue }) => {
     try {
+      if (useMockData) {
+        return mockMeetings;
+      }
       const response = await api.get('/api/meetings');
       return response.data;
     } catch (error: any) {
@@ -57,6 +170,10 @@ export const createMeeting = createAsyncThunk(
   'meetings/createMeeting',
   async (meetingData: Omit<Meeting, 'id' | 'status'>, { rejectWithValue }) => {
     try {
+      if (useMockData) {
+        mockMeetings = [...mockMeetings, { ...meetingData, id: String(mockMeetings.length + 1), status: 'scheduled' }];
+        return mockMeetings[mockMeetings.length - 1];
+      }
       const response = await api.post('/api/meetings', meetingData);
       return response.data;
     } catch (error: any) {
@@ -69,6 +186,10 @@ export const updateMeeting = createAsyncThunk(
   'meetings/updateMeeting',
   async ({ id, data }: { id: string; data: Partial<Meeting> }, { rejectWithValue }) => {
     try {
+      if (useMockData) {
+        mockMeetings = mockMeetings.map((meeting) => (meeting.id === id ? { ...meeting, ...data } : meeting));
+        return mockMeetings.find((meeting) => meeting.id === id) as Meeting;
+      }
       const response = await api.put(`/api/meetings/${id}`, data);
       return response.data;
     } catch (error: any) {

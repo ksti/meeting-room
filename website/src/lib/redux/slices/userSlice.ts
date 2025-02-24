@@ -1,12 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
 
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 export interface User {
   id: string;
-  name: string;
+  username: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  status: 'active' | 'disabled';
   role: 'admin' | 'user';
-  department: string;
+  department?: string;
 }
 
 interface UserState {
@@ -25,6 +30,37 @@ const initialState: UserState = {
 
 export const fetchUsers = createAsyncThunk('users/fetchUsers', async (_, { rejectWithValue }) => {
   try {
+    if (useMockData) {
+      return [
+        {
+          id: '1',
+          username: 'user1',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user1@example.com',
+          role: 'admin',
+          status: 'active',
+        },
+        {
+          id: '2',
+          username: 'user2',
+          firstName: 'Alice',
+          lastName: 'Doe',
+          email: 'user2@example.com',
+          role: 'user',
+          status: 'active',
+        },
+        {
+          id: '3',
+          username: 'user3',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user3@example.com',
+          role: 'user',
+          status: 'disabled',
+        },
+      ];
+    }
     const response = await api.get('/api/users');
     return response.data;
   } catch (error: any) {

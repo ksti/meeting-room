@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   TextField,
   Button,
@@ -12,6 +12,9 @@ import {
   MenuItem,
   Autocomplete,
 } from '@mui/material';
+import dayjs, { Dayjs } from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/redux/store';
@@ -19,25 +22,28 @@ import { createMeeting, updateMeeting } from '@/lib/redux/slices/meetingSlice';
 import { Room } from '@/lib/redux/slices/roomSlice';
 import { User } from '@/lib/redux/slices/userSlice';
 
-const schema = yup.object().shape({
-  title: yup.string().required('Title is required'),
-  description: yup.string().required('Description is required'),
-  roomId: yup.string().required('Room is required'),
-  startTime: yup.date().required('Start time is required'),
-  endTime: yup
-    .date()
-    .required('End time is required')
-    .min(yup.ref('startTime'), 'End time must be after start time'),
-  attendees: yup.array().of(yup.string().required()).min(1, 'At least one attendee is required').required('Attendees are required'),
+const schema = z.object({
+  title: z.string({ required_error: 'Title is required' }),
+  description: z.string({ required_error: 'Description is required' }),
+  roomId: z.string({ required_error: 'Room is required' }),
+  startTime: z.date({ required_error: 'Start time is required' }),
+  endTime: z.date({ required_error: 'End time is required' }),
+  attendees: z.array(z.object({
+    id: z.string({ required_error: 'User id is required' }),
+    usermane: z.string({ required_error: 'Username is required' }),
+  })).min(1, 'At least one attendee is required'),
+}).refine((data) => data.endTime > data.startTime, {
+  message: "End time must be after start time.",
+  path: ["endTime"],
 });
 
 interface MeetingFormData {
   title: string;
   description: string;
   roomId: string;
-  startTime: Date;
-  endTime: Date;
-  attendees: string[];
+  startTime: Dayjs;
+  endTime: Dayjs;
+  attendees: User[];
 }
 
 interface MeetingFormProps {
@@ -57,7 +63,7 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
     control,
     formState: { errors },
   } = useForm<MeetingFormData>({
-    resolver: yupResolver(schema),
+    resolver: zodResolver(schema),
     defaultValues: initialData,
   });
 
@@ -71,7 +77,7 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
               ...data,
               startTime: data.startTime.toISOString(),
               endTime: data.endTime.toISOString(),
-              organizer: currentUser.id,
+              organizer: currentUser,
             },
           })
         ).unwrap();
@@ -81,7 +87,7 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
             ...data,
             startTime: data.startTime.toISOString(),
             endTime: data.endTime.toISOString(),
-            organizer: currentUser.id,
+            organizer: currentUser,
           })
         ).unwrap();
       }
@@ -143,11 +149,13 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
         name="startTime"
         control={control}
         render={({ field }) => (
-          <DateTimePicker
-            label="Start Time"
-            {...field}
-            sx={{ mt: 2, width: '100%' }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Start Time"
+              {...field}
+              sx={{ mt: 2, width: '100%' }}
+            />
+          </LocalizationProvider>
         )}
       />
 
@@ -155,11 +163,13 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
         name="endTime"
         control={control}
         render={({ field }) => (
-          <DateTimePicker
-            label="End Time"
-            {...field}
-            sx={{ mt: 2, width: '100%' }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="End Time"
+              {...field}
+              sx={{ mt: 2, width: '100%' }}
+            />
+          </LocalizationProvider>
         )}
       />
 
@@ -170,10 +180,11 @@ export default function MeetingForm({ initialData, onSuccess }: MeetingFormProps
           <Autocomplete
             multiple
             options={users.filter((user: User) => user.id !== currentUser.id)}
-            getOptionLabel={(option: User) => `${option.name} (${option.email})`}
-            value={users.filter((user: User) => value?.includes(user.id)) || []}
+            getOptionLabel={(option: User) => `${option.username} (${option.email})`}
+            value={users.filter((user: User) => value && value.findIndex(u => u.id === user.id) != -1) || []}
             onChange={(_, newValue) => {
-              onChange(newValue.map((user: User) => user.id));
+              // onChange(newValue.map((user: User) => user.id));
+              onChange(newValue);
             }}
             renderInput={(params) => (
               <TextField

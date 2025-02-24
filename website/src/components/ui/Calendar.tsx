@@ -13,16 +13,18 @@ import {
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
+import dayjs, { Dayjs } from 'dayjs';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/redux/store';
 import { Meeting } from '@/lib/redux/slices/meetingSlice';
+import ScheduleCalendar from '@/components/ui/ScheduleCalendar';
 
 interface CalendarProps {
-  onDateSelect?: (date: Date) => void;
-  selectedDate?: Date;
+  onMeetingSelect?: (meeting: Meeting) => void;
+  selectedMeeting?: Meeting;
 }
 
-export default function Calendar({ onDateSelect, selectedDate }: CalendarProps) {
+export default function Calendar({ onMeetingSelect, selectedMeeting }: CalendarProps) {
   const theme = useTheme();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const meetings = useSelector((state: RootState) => state.meetings.meetings);
@@ -61,7 +63,7 @@ export default function Calendar({ onDateSelect, selectedDate }: CalendarProps) 
         </IconButton>
       </Box>
 
-      <>...</>
+      <ScheduleCalendar></ScheduleCalendar>
     </Paper>
   );
 }

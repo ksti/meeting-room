@@ -10,8 +10,8 @@ export default function Home() {
 
   useEffect(() => {
     // 重定向到登录页面或仪表板
-    const token = localStorage.getItem('token');
-    if (token) {
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
       router.replace('/dashboard');
     } else {
       router.replace('/auth/login');

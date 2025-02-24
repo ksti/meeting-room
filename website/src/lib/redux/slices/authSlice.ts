@@ -1,17 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
 
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 interface AuthState {
   user: any | null;
-  token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
-  user: null,
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+  user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') ?? '{}') : null,
+  accessToken: typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null,
   isAuthenticated: false,
   loading: false,
   error: null,
@@ -21,8 +23,22 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      localStorage.setItem('token', response.data.token);
+      if (useMockData) {
+        const mockResponse = {
+          user: {
+            id: '1',
+            email: 'user1@example.com',
+            username: 'user1',
+          },
+          accessToken: 'mock-accessToken',
+        };
+        localStorage.setItem('accessToken', mockResponse.accessToken);
+        localStorage.setItem('user', JSON.stringify(mockResponse.user));
+        return mockResponse;
+      }
+      const response = await api.post('/api/auth/login', credentials);
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('user', response.data.user);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
@@ -30,8 +46,9 @@ export const login = createAsyncThunk(
   }
 );
 
-export const logout = createAsyncThunk('auth/logout', async () => {
-  localStorage.removeItem('token');
+export const logout = createAsyncThunk('/api/auth/logout', async () => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
 });
 
 const authSlice = createSlice({
@@ -52,7 +69,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.accessToken = action.payload.accessToken;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -60,7 +77,7 @@ const authSlice = createSlice({
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.token = null;
+        state.accessToken = null;
         state.isAuthenticated = false;
       });
   },
