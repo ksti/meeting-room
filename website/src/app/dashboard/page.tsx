@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Grid,
   Paper,
@@ -28,6 +28,9 @@ export default function DashboardPage() {
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
   const meetings = useSelector((state: RootState) => state.meetings.meetings);
 
+  const meetingsRef = useRef(meetings);
+  meetingsRef.current = meetings;
+
   useEffect(() => {
     dispatch(fetchMeetings());
     dispatch(fetchRooms());
@@ -35,7 +38,10 @@ export default function DashboardPage() {
   }, [dispatch]);
 
   const handleMeetingSelect = (meetingId: string) => {
-    setSelectedMeeting(meetings.find((meeting) => meeting.id === meetingId));
+    console.log('meetings::', meetingsRef.current);
+    const meeting = meetingsRef.current.find((meeting) => meeting.id === meetingId);
+    console.log('Selected Meeting:', meetingId, meeting);
+    setSelectedMeeting(meeting);
     setIsCreateMeetingOpen(true);
   };
 
@@ -70,7 +76,7 @@ export default function DashboardPage() {
                 New Meeting
               </Button>
             </Box>
-            <ScheduleCalendar mettings={meetings} onMeetingSelect={handleMeetingSelect} />
+            <ScheduleCalendar meetings={meetings} onMeetingSelect={handleMeetingSelect} />
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
