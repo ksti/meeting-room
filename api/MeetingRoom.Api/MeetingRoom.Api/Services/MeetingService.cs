@@ -6,21 +6,25 @@ using MeetingRoom.Api.Repositories;
 
 namespace MeetingRoom.Api.Services
 {
-    public class MeetingService(IMeetingRepository meetingRepository) : IMeetingService
+    public class MeetingService(IMeetingRepository meetingRepository, IUserRepository userRepository) : IMeetingService
     {
         public async Task<MeetingModel> CreateMeetingAsync(MeetingCreateRequest request, string operatorId)
         {
-            var conflictingMeetings = await meetingRepository.GetMeetingsByTimeAsync(request.StarTime, request.EndTime);
+            var conflictingMeetings = await meetingRepository.GetMeetingsByTimeAsync(request.StartTime, request.EndTime);
             if (conflictingMeetings.Any()) throw new BusinessException("There are conflicting meetings");
+
+            var attendees = await Task.WhenAll(request.Attendees.Select(userRepository.GetByIdAsync));
 
             var newEntity = new MeetingEntity
             {
-                Name = request.Name,
+                Title = request.Title,
                 Description = request.Description,
                 Capacity = request.Capacity,
-                StarTime = request.StarTime,
+                StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 RoomId = request.RoomId,
+                OrganizerId = operatorId,
+                Attendees = attendees.Where(x => x != null).ToList() as List<UserEntity>,
             };
             newEntity.SetCreated(operatorId);
             await meetingRepository.CreateAsync(newEntity);
@@ -78,14 +82,14 @@ namespace MeetingRoom.Api.Services
             var old = await meetingRepository.GetByIdAsync(request.Id);
             if (old == null) throw new NotFoundException();
 
-            if (!string.IsNullOrEmpty(request.Name))
-                old.Name = request.Name;
+            if (!string.IsNullOrEmpty(request.Title))
+                old.Title = request.Title;
             if (!string.IsNullOrEmpty(request.Description))
                 old.Description = request.Description;
             if (request.Capacity.HasValue)
                 old.Capacity = request.Capacity.Value;
-            if (request.StarTime.HasValue)
-                old.StarTime = request.StarTime.Value;
+            if (request.StartTime.HasValue)
+                old.StartTime = request.StartTime.Value;
             if (request.EndTime.HasValue)
                 old.EndTime = request.EndTime.Value;
             if (!string.IsNullOrEmpty(request.RoomId))

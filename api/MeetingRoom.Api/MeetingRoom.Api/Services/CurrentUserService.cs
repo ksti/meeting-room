@@ -19,7 +19,7 @@ public class CurrentUserService : ICurrentUserService
     /// <summary>
     /// 当前用户邮箱
     /// </summary>
-    public string? UserId => _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+    public string? Username => _httpContextAccessor.HttpContext?.User?.Identity?.Name;
 
     /// <summary>
     /// 当前用户ID
@@ -36,7 +36,7 @@ public class CurrentUserService : ICurrentUserService
     /// </summary>
     public async Task<UserModel?> GetCurrentUserAsync()
     {
-        if (!IsAuthenticated || string.IsNullOrEmpty(UserId))
+        if (!IsAuthenticated || string.IsNullOrEmpty(Username))
         {
             return null;
         }
@@ -45,7 +45,7 @@ public class CurrentUserService : ICurrentUserService
             .AsNoTracking()
             .Include(u => u.Tokens)
             .Include(u => u.Devices)
-            .FirstOrDefaultAsync(u => u.Id == UserId);
+            .FirstOrDefaultAsync(u => u.Username == Username);
 
         return user?.MapToModel();
     }

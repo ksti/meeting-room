@@ -37,7 +37,7 @@ namespace MeetingRoom.Api.Controllers
                 return ApiResponse<UserModel>.BadRequest(ModelState);
             }
             var currentUser = await currentUserService.GetCurrentUserAsync();
-            var result = await userService.UpdateUserAsync(request, currentUser!.Id);
+            var result = await userService.CreateUserAsync(request, currentUser!.Id);
             return ApiResponse<UserModel>.Ok(result);
         }
 

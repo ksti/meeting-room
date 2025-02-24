@@ -97,6 +97,8 @@ namespace MeetingRoom.Api.Services
                 LastName = request.LastName,
                 Email = request.Email,
                 Username = request.Username,
+                Contact = request.Contact,
+                Avatar = request.Avatar,
                 Role = request.Role,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             };

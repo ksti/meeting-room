@@ -37,12 +37,16 @@ namespace MeetingRoom.Api.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITokenRepository, TokenRepository>();
             services.AddScoped<IDeviceRepository, DeviceRepository>();
+            services.AddScoped<IRoomRepository, RoomRepository>();
+            services.AddScoped<IMeetingRepository, MeetingRepository>();
 
             // Application Services
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoomService, RoomService>();
+            services.AddScoped<IMeetingService, MeetingService>();
 
             // JWT Authentication
             var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);

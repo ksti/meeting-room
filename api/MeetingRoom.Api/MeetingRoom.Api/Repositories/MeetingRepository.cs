@@ -60,7 +60,7 @@ namespace MeetingRoom.Api.Repositories
             // Get paginated data with explicit column selection
             var sql = $@"
                 SELECT 
-                    Id, Name, Description, Capacity, StarTime, EndTime, RoomId, Status, CreatedAt, 
+                    Id, Name, Description, Capacity, StartTime, EndTime, RoomId, Status, CreatedAt, 
                     UpdatedAt, CreatedBy, UpdatedBy
                 FROM Meetings
                 WHERE {whereClause}
@@ -86,7 +86,7 @@ namespace MeetingRoom.Api.Repositories
         public async Task<ICollection<MeetingEntity>> GetMeetingsByTimeAsync(DateTime startTime, DateTime endTime)
         {
             var items = _context.Meetings
-                .Where(m => m.StarTime >= startTime && m.EndTime <= endTime);
+                .Where(m => m.StartTime >= startTime && m.EndTime <= endTime);
 
             return items.ToList();
         }
@@ -94,10 +94,10 @@ namespace MeetingRoom.Api.Repositories
         public async Task<ICollection<MeetingEntity>> GetMeetingsByUserIdAsync(string userId, DateTime startTime, DateTime endTime)
         {
             var items = _context.Meetings
-                .Where(m => m.StarTime >= startTime 
+                .Where(m => m.StartTime >= startTime 
                             && m.EndTime <= endTime
-                            && m.Participants.Any(u => u.Id == userId))
-                .Include(m => m.Participants);
+                            && m.Attendees.Any(u => u.Id == userId))
+                .Include(m => m.Attendees);
 
             return items.ToList();
         }
@@ -118,7 +118,7 @@ namespace MeetingRoom.Api.Repositories
             // Get paginated data with explicit column selection
             var sql = $@"
                 SELECT 
-                    Id, Name, Description, Capacity, StarTime, EndTime, RoomId, Status, CreatedAt, 
+                    Id, Name, Description, Capacity, StartTime, EndTime, RoomId, Status, CreatedAt, 
                     UpdatedAt, CreatedBy, UpdatedBy
                 FROM Meetings
                 WHERE {whereClause}";

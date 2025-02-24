@@ -53,7 +53,7 @@ namespace MeetingRoom.Api.Controllers
                 return ApiResponse<MeetingModel>.BadRequest(ModelState);
             }
             var currentUser = await currentUserService.GetCurrentUserAsync();
-            var result = await meetingService.UpdateMeetingAsync(request, currentUser!.Id);
+            var result = await meetingService.CreateMeetingAsync(request, currentUser!.Id);
             return ApiResponse<MeetingModel>.Ok(result);
         }
 

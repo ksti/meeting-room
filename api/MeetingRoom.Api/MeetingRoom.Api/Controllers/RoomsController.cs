@@ -37,7 +37,7 @@ namespace MeetingRoom.Api.Controllers
                 return ApiResponse<RoomModel>.BadRequest(ModelState);
             }
             var currentUser = await currentUserService.GetCurrentUserAsync();
-            var result = await roomService.UpdateRoomAsync(request, currentUser!.Id);
+            var result = await roomService.CreateRoomAsync(request, currentUser!.Id);
             return ApiResponse<RoomModel>.Ok(result);
         }
 
