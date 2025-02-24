@@ -11,9 +11,12 @@ namespace MeetingRoom.Api.Models
         public string? LastName { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
+        public string? Contact { get; set; } = string.Empty;
+        public string? Avatar { get; set; } = string.Empty;
         public string Role { get; set; } = UserRole.User.GetDisplayName();
         public string Status { get; set; } = UserStatus.Active.GetDisplayName();
         public ICollection<DeviceModel> Devices { get; set; } = [];
+        public ICollection<TokenModel> Tokens { get; set; } = [];
         public ICollection<MeetingModel> Meetings { get; set; } = [];
     }
     public class UserUpdateRequest
@@ -23,6 +26,8 @@ namespace MeetingRoom.Api.Models
         public string? LastName { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
+        public string? Contact { get; set; }
+        public string? Avatar { get; set; }
         public string? Role { get; set; }
         public string? Password { get; set; }
         public string? Status { get; set; }

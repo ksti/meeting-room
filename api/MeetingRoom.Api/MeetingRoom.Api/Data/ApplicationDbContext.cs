@@ -125,12 +125,12 @@ namespace MeetingRoom.Api.Data
             {
                 entity.ToTable("Meetings");
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.Name);
+                entity.HasIndex(e => e.Title);
 
-                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Title).HasMaxLength(100);
                 entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.Capacity);
-                entity.Property(e => e.StarTime);
+                entity.Property(e => e.StartTime);
                 entity.Property(e => e.EndTime);
                 entity.Property(e => e.Status).HasMaxLength(20);
 
@@ -139,7 +139,7 @@ namespace MeetingRoom.Api.Data
                     .HasForeignKey(e => e.RoomId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasMany(e => e.Participants)
+                entity.HasMany(e => e.Attendees)
                     .WithMany(e => e.Meetings)
                     .UsingEntity(j => j.ToTable("MeetingUsers"));
             });

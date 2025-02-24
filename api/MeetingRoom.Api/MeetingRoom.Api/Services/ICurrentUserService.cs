@@ -4,7 +4,7 @@ namespace MeetingRoom.Api.Services;
 
 public interface ICurrentUserService
 {
-    string? UserId { get; }
+    string? Username { get; }
 
     /// <summary>
     /// 获取当前用户信息

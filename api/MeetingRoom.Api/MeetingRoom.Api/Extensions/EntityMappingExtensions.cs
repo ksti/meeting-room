@@ -5,7 +5,7 @@ namespace MeetingRoom.Api.Extensions
 {
     public static class EntityMappingExtensions
     {
-        public static UserModel MapToModel(this UserEntity entity)
+        public static UserModel MapToModel(this UserEntity entity, bool? isLoadReference = true)
         {
             return new UserModel
             {
@@ -14,13 +14,16 @@ namespace MeetingRoom.Api.Extensions
                 LastName = entity.LastName,
                 Email = entity.Email,
                 Username = entity.Username,
+                Contact = entity.Contact,
+                Avatar = entity.Avatar,
                 Role = entity.Role,
                 Status = entity.Status,
-                Devices = entity.Devices.Select(MapToModel).ToList(),
-                Meetings = entity.Meetings.Select(MapToModel).ToList(),
+                Devices = isLoadReference.HasValue && isLoadReference.Value ? entity.Devices.Select(e => MapToModel(e, false)).ToList() : [],
+                Tokens = isLoadReference.HasValue && isLoadReference.Value ? entity.Tokens.Select(e => MapToModel(e, false)).ToList() : [],
+                Meetings = isLoadReference.HasValue && isLoadReference.Value ? entity.Meetings.Select(e => MapToModel(e, false)).ToList() : [],
             };
         }
-        public static TokenModel MapToModel(this TokenEntity entity)
+        public static TokenModel MapToModel(this TokenEntity entity, bool? isLoadReference = true)
         {
             return new TokenModel
             {
@@ -31,7 +34,7 @@ namespace MeetingRoom.Api.Extensions
                 TokenType = entity.TokenType,
             };
         }
-        public static DeviceModel MapToModel(this DeviceEntity entity)
+        public static DeviceModel MapToModel(this DeviceEntity entity, bool? isLoadReference = true)
         {
             return new DeviceModel
             {
@@ -48,26 +51,28 @@ namespace MeetingRoom.Api.Extensions
                 LastIpAddress = entity.LastIpAddress,
                 LastLoginAt = entity.LastLoginAt,
                 Status = entity.Status,
-                Token = entity.Token?.MapToModel(),
+                Token = isLoadReference.HasValue && isLoadReference.Value ? entity.Token?.MapToModel(false) : null,
             };
         }
-        public static MeetingModel MapToModel(this MeetingEntity entity)
+        public static MeetingModel MapToModel(this MeetingEntity entity, bool? isLoadReference = true)
         {
             return new MeetingModel
             {
                 Id = entity.Id,
-                Name = entity.Name,
+                Title = entity.Title,
                 Description = entity.Description,
                 Capacity = entity.Capacity,
-                StarTime = entity.StarTime,
+                StartTime = entity.StartTime,
                 EndTime = entity.EndTime,
+                OrganizerId = entity.OrganizerId,
                 RoomId = entity.RoomId,
                 Status = entity.Status,
-                Room = entity.Room?.MapToModel(),
-                Participants = entity.Participants.Select(MapToModel).ToList(),
+                Organizer = isLoadReference.HasValue && isLoadReference.Value ? entity.Organizer?.MapToModel(false) : null,
+                Room = isLoadReference.HasValue && isLoadReference.Value ? entity.Room?.MapToModel(false) : null,
+                Attendees = isLoadReference.HasValue && isLoadReference.Value ? entity.Attendees.Select(e => MapToModel(e, false)).ToList() : [],
             };
         }
-        public static RoomModel MapToModel(this RoomEntity entity)
+        public static RoomModel MapToModel(this RoomEntity entity, bool? isLoadReference = true)
         {
             return new RoomModel
             {
@@ -76,7 +81,7 @@ namespace MeetingRoom.Api.Extensions
                 Description = entity.Description,
                 Capacity = entity.Capacity,
                 Status = entity.Status,
-                Meetings = entity.Meetings.Select(MapToModel).ToList(),
+                Meetings = isLoadReference.HasValue && isLoadReference.Value ? entity.Meetings.Select(e => MapToModel(e, false)).ToList() : [],
             };
         }
     }

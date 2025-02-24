@@ -115,6 +115,10 @@ namespace MeetingRoom.Api.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PasswordHash = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Contact = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Avatar = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Role = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Status = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
@@ -269,13 +273,15 @@ namespace MeetingRoom.Api.Migrations
                 {
                     Id = table.Column<string>(type: "varchar(36)", maxLength: 36, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                    Title = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Capacity = table.Column<int>(type: "int", nullable: false),
-                    StarTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    StartTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    OrganizerId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     RoomId = table.Column<string>(type: "varchar(36)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Status = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
@@ -346,14 +352,14 @@ namespace MeetingRoom.Api.Migrations
                 name: "MeetingUsers",
                 columns: table => new
                 {
-                    MeetingsId = table.Column<string>(type: "varchar(36)", nullable: false)
+                    AttendeesId = table.Column<string>(type: "varchar(36)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    ParticipantsId = table.Column<string>(type: "varchar(36)", nullable: false)
+                    MeetingsId = table.Column<string>(type: "varchar(36)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MeetingUsers", x => new { x.MeetingsId, x.ParticipantsId });
+                    table.PrimaryKey("PK_MeetingUsers", x => new { x.AttendeesId, x.MeetingsId });
                     table.ForeignKey(
                         name: "FK_MeetingUsers_Meetings_MeetingsId",
                         column: x => x.MeetingsId,
@@ -361,8 +367,8 @@ namespace MeetingRoom.Api.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MeetingUsers_Users_ParticipantsId",
-                        column: x => x.ParticipantsId,
+                        name: "FK_MeetingUsers_Users_AttendeesId",
+                        column: x => x.AttendeesId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -487,19 +493,19 @@ namespace MeetingRoom.Api.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Meetings_Name",
-                table: "Meetings",
-                column: "Name");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Meetings_RoomId",
                 table: "Meetings",
                 column: "RoomId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MeetingUsers_ParticipantsId",
+                name: "IX_Meetings_Title",
+                table: "Meetings",
+                column: "Title");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MeetingUsers_MeetingsId",
                 table: "MeetingUsers",
-                column: "ParticipantsId");
+                column: "MeetingsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Rooms_Name",

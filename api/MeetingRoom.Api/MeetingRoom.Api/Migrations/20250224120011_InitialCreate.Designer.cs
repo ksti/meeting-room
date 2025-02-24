@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MeetingRoom.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250223132247_InitialCreate")]
+    [Migration("20250224120011_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -27,15 +27,15 @@ namespace MeetingRoom.Api.Migrations
 
             modelBuilder.Entity("MeetingEntityUserEntity", b =>
                 {
+                    b.Property<string>("AttendeesId")
+                        .HasColumnType("varchar(36)");
+
                     b.Property<string>("MeetingsId")
                         .HasColumnType("varchar(36)");
 
-                    b.Property<string>("ParticipantsId")
-                        .HasColumnType("varchar(36)");
+                    b.HasKey("AttendeesId", "MeetingsId");
 
-                    b.HasKey("MeetingsId", "ParticipantsId");
-
-                    b.HasIndex("ParticipantsId");
+                    b.HasIndex("MeetingsId");
 
                     b.ToTable("MeetingUsers", (string)null);
                 });
@@ -165,22 +165,26 @@ namespace MeetingRoom.Api.Migrations
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false);
 
-                    b.Property<string>("Name")
+                    b.Property<string>("OrganizerId")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("RoomId")
                         .IsRequired()
                         .HasColumnType("varchar(36)");
 
-                    b.Property<DateTime>("StarTime")
+                    b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -190,9 +194,9 @@ namespace MeetingRoom.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name");
-
                     b.HasIndex("RoomId");
+
+                    b.HasIndex("Title");
 
                     b.ToTable("Meetings", (string)null);
                 });
@@ -321,6 +325,12 @@ namespace MeetingRoom.Api.Migrations
                     b.Property<string>("Id")
                         .HasMaxLength(36)
                         .HasColumnType("varchar(36)");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Contact")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -586,15 +596,15 @@ namespace MeetingRoom.Api.Migrations
 
             modelBuilder.Entity("MeetingEntityUserEntity", b =>
                 {
-                    b.HasOne("MeetingRoom.Api.Entities.MeetingEntity", null)
+                    b.HasOne("MeetingRoom.Api.Entities.UserEntity", null)
                         .WithMany()
-                        .HasForeignKey("MeetingsId")
+                        .HasForeignKey("AttendeesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MeetingRoom.Api.Entities.UserEntity", null)
+                    b.HasOne("MeetingRoom.Api.Entities.MeetingEntity", null)
                         .WithMany()
-                        .HasForeignKey("ParticipantsId")
+                        .HasForeignKey("MeetingsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
