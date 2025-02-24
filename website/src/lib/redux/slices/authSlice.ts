@@ -12,7 +12,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  user: null,
+  user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') ?? '{}') : null,
   accessToken: typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null,
   isAuthenticated: false,
   loading: false,
@@ -24,16 +24,21 @@ export const login = createAsyncThunk(
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
       if (useMockData) {
-        return {
+        const mockResponse = {
           user: {
             id: '1',
-            email: ''
+            email: 'user1@example.com',
+            username: 'user1',
           },
           accessToken: 'mock-accessToken',
         };
+        localStorage.setItem('accessToken', mockResponse.accessToken);
+        localStorage.setItem('user', JSON.stringify(mockResponse.user));
+        return mockResponse;
       }
       const response = await api.post('/api/auth/login', credentials);
       localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('user', response.data.user);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
@@ -43,6 +48,7 @@ export const login = createAsyncThunk(
 
 export const logout = createAsyncThunk('/api/auth/logout', async () => {
   localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
 });
 
 const authSlice = createSlice({

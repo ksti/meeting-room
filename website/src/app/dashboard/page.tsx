@@ -13,17 +13,18 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
+import dayjs, { Dayjs } from 'dayjs';
 import { AppDispatch, RootState } from '@/lib/redux/store';
-import Calendar from '@/components/ui/Calendar';
+import ScheduleCalendar from '@/components/ui/ScheduleCalendar';
 import MeetingForm from '@/components/forms/MeetingForm';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { fetchMeetings } from '@/lib/redux/slices/meetingSlice';
+import { fetchMeetings, Meeting } from '@/lib/redux/slices/meetingSlice';
 import { fetchRooms } from '@/lib/redux/slices/roomSlice';
 import { fetchUsers } from '@/lib/redux/slices/userSlice';
 
 export default function DashboardPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting>();
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
   const meetings = useSelector((state: RootState) => state.meetings.meetings);
 
@@ -33,11 +34,13 @@ export default function DashboardPage() {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
+  const handleMeetingSelect = (meetingId: string) => {
+    setSelectedMeeting(meetings.find((meeting) => meeting.id === meetingId));
+    setIsCreateMeetingOpen(true);
   };
 
   const handleCreateMeetingClick = () => {
+    setSelectedMeeting(undefined);
     setIsCreateMeetingOpen(true);
   };
 
@@ -67,7 +70,7 @@ export default function DashboardPage() {
                 New Meeting
               </Button>
             </Box>
-            <Calendar onDateSelect={handleDateSelect} selectedDate={selectedDate} />
+            <ScheduleCalendar mettings={meetings} onMeetingSelect={handleMeetingSelect} />
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
@@ -86,16 +89,13 @@ export default function DashboardPage() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Schedule New Meeting</DialogTitle>
+        <DialogTitle>{selectedMeeting ? 'Update Meeting' : 'Schedule New Meeting'}</DialogTitle>
         <DialogContent>
           <MeetingForm
-            initialData={{ 
-              startTime: selectedDate, 
-              endTime: selectedDate, 
-              title: '', 
-              description: '', 
-              roomId: '', 
-              attendees: [] 
+            initialData={!selectedMeeting ? undefined : {
+              ...selectedMeeting,
+              startTime: dayjs(selectedMeeting?.startTime),
+              endTime: dayjs(selectedMeeting?.endTime),
             }}
             onSuccess={handleMeetingSuccess}
           />

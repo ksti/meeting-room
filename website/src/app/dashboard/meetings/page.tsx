@@ -55,8 +55,8 @@ export default function DashboardPage() {
                     </Box>
                   </TableCell>
                   <TableCell>{meeting.description}</TableCell>
-                  <TableCell>{meeting.organizer}</TableCell>
-                  <TableCell>{meeting.attendees.join(',')}</TableCell>
+                  <TableCell>{meeting.organizer.username}</TableCell>
+                  <TableCell>{meeting.attendees.map(u => u.username).join(',')}</TableCell>
                   <TableCell>{meeting.status}</TableCell>
                 </TableRow>
               ))}

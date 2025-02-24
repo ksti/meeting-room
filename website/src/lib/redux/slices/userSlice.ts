@@ -11,7 +11,7 @@ export interface User {
   email: string;
   status: 'active' | 'disabled';
   role: 'admin' | 'user';
-  department: string;
+  department?: string;
 }
 
 interface UserState {
@@ -44,7 +44,7 @@ export const fetchUsers = createAsyncThunk('users/fetchUsers', async (_, { rejec
         {
           id: '2',
           username: 'user2',
-          firstName: 'John',
+          firstName: 'Alice',
           lastName: 'Doe',
           email: 'user2@example.com',
           role: 'user',
