@@ -19,14 +19,15 @@ public class MeetingConfiguration : IEntityTypeConfiguration<Meeting>
         builder.Property(m => m.Description)
             .HasMaxLength(500);
         
-        // 配置 TimeRange 值对象
-        builder.Property(m => m.TimeRange.Start)
-            .HasColumnName("StartTime")
+        // 配置 TimeRange 值对象 - 使用影子属性来存储值对象的数据
+        builder.Property<DateTime>("StartTime")
             .IsRequired();
         
-        builder.Property(m => m.TimeRange.End)
-            .HasColumnName("EndTime")
+        builder.Property<DateTime>("EndTime")
             .IsRequired();
+        
+        // 忽略 TimeRange 值对象，因为我们使用影子属性来存储它的数据
+        builder.Ignore(m => m.TimeRange);
         
         builder.HasOne<Room>()
             .WithMany()

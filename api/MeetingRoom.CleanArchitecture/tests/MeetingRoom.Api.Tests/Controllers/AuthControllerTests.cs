@@ -1,8 +1,10 @@
 using MediatR;
 using MeetingRoom.Api.Controllers;
-using MeetingRoom.Application.Commands.Users;
-using MeetingRoom.Application.Common.Models;
+using MeetingRoom.Application.Common;
+using MeetingRoom.Application.Features.Users.Commands.RegisterUser;
+using MeetingRoom.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -18,7 +20,7 @@ public class AuthControllerTests
         mediatorMock.Setup(m => m.Send(It.IsAny<RegisterUserCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<string>.Success("userId"));
 
-        var controller = new AuthController(mediatorMock.Object);
+        var controller = new AuthController(mediatorMock.Object, new Mock<ICurrentUserService>().Object, new Mock<ILogger<AuthController>>().Object);
         var command = new RegisterUserCommand
         {
             Username = "testuser",
@@ -32,7 +34,7 @@ public class AuthControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         var returnValue = Assert.IsType<Result<string>>(okResult.Value);
-        Assert.True(returnValue.Succeeded);
+        Assert.True(returnValue.IsSuccess);
         Assert.Equal("userId", returnValue.Data);
     }
 }
