@@ -1,8 +1,13 @@
-using MeetingRoom.Domain.Entities;
-using MeetingRoom.Infrastructure.Data;
-using MeetingRoom.Infrastructure.Repositories;
+using MeetingRoom.Application.Common.Exceptions;
+using MeetingRoom.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using MeetingRoom.Infrastructure.Persistence;
+using MeetingRoom.Infrastructure.Services;
+using MeetingRoom.Domain.Aggregates.UserAggregate;
+using Microsoft.AspNetCore.Http;
+using MeetingRoom.Application.Interfaces;
+using Moq;
 
 namespace MeetingRoom.Infrastructure.Tests.Repositories;
 
@@ -16,7 +21,7 @@ public class UserRepositoryTests
             .UseInMemoryDatabase(databaseName: "TestDatabase_" + Guid.NewGuid().ToString())
             .Options;
 
-        using var context = new ApplicationDbContext(options);
+        using var context = new ApplicationDbContext(options, new DateTimeService(), new Mock<ICurrentUserService>().Object);
         var repository = new UserRepository(context);
         var user = User.Create("testuser", "test@example.com", "Password123!");
 

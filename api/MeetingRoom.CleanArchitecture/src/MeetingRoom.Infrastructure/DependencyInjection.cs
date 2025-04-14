@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MeetingRoom.Application.Interfaces;
 using MeetingRoom.Domain.Interfaces.Repositories;
 using MeetingRoom.Infrastructure.Persistence;
+using MeetingRoom.Infrastructure.Persistence.Interceptors;
 using MeetingRoom.Infrastructure.Persistence.Repositories;
 using MeetingRoom.Infrastructure.Services;
 using MeetingRoom.Infrastructure.Settings;
@@ -29,6 +30,9 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // 添加拦截器
+        services.AddScoped<TimeRangeInterceptor>();
+        
         // 添加数据库上下文
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
